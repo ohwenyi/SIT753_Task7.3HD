@@ -1,7 +1,7 @@
 import logging
 import sys
 from loguru import logger
-from typing import Optional, Any
+from typing import Dict, Any, Union, Optional
 import json
 
 
@@ -20,8 +20,8 @@ class InterceptHandler(logging.Handler):
 
         # Find caller from where the logged message originated
         frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:  # type: ignore
-            frame = frame.f_back # type: ignore
+        while frame and frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
             depth += 1
 
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
@@ -40,18 +40,25 @@ def setup_logging(log_level: str = "INFO", json_format: bool = False) -> None:
     
     # Configure format based on environment
     if json_format:
-        # Structured JSON format for production
-        format_string = json.dumps({
-            "timestamp": "{time:YYYY-MM-DD HH:mm:ss.SSS}",
-            "level": "{level}",
-            "module": "{name}",
-            "function": "{function}",
-            "line": "{line}",
-            "message": "{message}"
-        })
+        def json_formatter(record: Dict[str, Any]) -> str:
+            log_entry = {
+                "timestamp": record["time"].isoformat(),
+                "level": record["level"].name,
+                "message": record["message"],
+                "module": record["extra"].get("module", record["module"]),
+                "function": record["function"],
+                "line": record["line"],
+            }
+            if record["exception"]:
+                log_entry["exception"] = str(record["exception"])
+            log_entry.update(record["extra"])
+            return json.dumps(log_entry)
+        log_format = (
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {extra[module]}:{function}:{line} - {message}"
+        )
     else:
         # Human-readable format for development
-        format_string = (
+        log_format = (
             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
             "<level>{level: <8}</level> | "
             "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
@@ -61,10 +68,10 @@ def setup_logging(log_level: str = "INFO", json_format: bool = False) -> None:
     # Add loguru handler
     logger.add(
         sys.stdout,
-        format=format_string,
+        format=log_format,
         level=log_level.upper(),
         colorize=not json_format,  # Only colorize in development
-        serialize=json_format      # Serialize to JSON in production
+        serialize=json_format       
     )
     
     # Intercept standard logging
@@ -72,7 +79,9 @@ def setup_logging(log_level: str = "INFO", json_format: bool = False) -> None:
     
     # Set specific loggers to appropriate levels
     for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"]:
-        logging.getLogger(logger_name).handlers = [InterceptHandler()]
+        std_logger = logging.getLogger(logger_name)
+        std_logger.handlers = [InterceptHandler()]
+        std_logger.propagate = False
 
 
 def get_logger(name: str) -> Any:
@@ -86,7 +95,7 @@ def get_logger(name: str) -> Any:
     return logger.bind(module=name)
 
 
-def log_request(method: str, path: str, status_code: int, duration_ms: float) -> None:
+def log_request(method: str, path: str, status_code: int, duration_ms: float, client_ip: Optional[str]) -> None:
     """
     Log HTTP request in a structured way.
     Args:
@@ -95,13 +104,15 @@ def log_request(method: str, path: str, status_code: int, duration_ms: float) ->
         status_code: HTTP status code
         duration_ms: Request duration in milliseconds
     """
-    logger.info(
-        "HTTP Request",
+    access_logger = logger.bind(module="api.access")
+    access_logger.info(
+        f"{client_ip} - \"{method} {path}\" {status_code}", 
         extra={
             "http_method": method,
-            "http_path": path, 
+            "http_path": path,
             "http_status": status_code,
-            "duration_ms": duration_ms
+            "duration_ms": duration_ms,
+            "client_ip": client_ip
         }
     )
 
@@ -115,15 +126,15 @@ def log_health_check(service: str, status: str, duration_ms: float, error: Optio
         duration_ms: Check duration in milliseconds
         error: Error message if check failed
     """
-    log_data = {
-        "health_check": True,
-        "service": service,
-        "status": status,
+    health_logger = logger.bind(module="api.health")
+    log_details = {
+        "service_checked": service, 
+        "check_status": status,
         "duration_ms": duration_ms
     }
-    
+
     if error:
-        log_data["error"] = error
-        logger.warning("Health check failed", extra=log_data)
+        log_details["error_message"] = error
+        health_logger.warning("Health check failed", extra=log_details)
     else:
-        logger.info("Health check passed", extra=log_data)
+        health_logger.info("Health check passed", extra=log_details)
