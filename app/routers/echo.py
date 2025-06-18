@@ -44,6 +44,9 @@ async def echo_query(
     if uppercase:
         processed_msg = processed_msg.upper()
 
+    if prefix:
+        processed_msg = f"{prefix}: {processed_msg}"
+        
     response = EchoResponse(
         echo=processed_msg,
         timestamp=time.time(),
