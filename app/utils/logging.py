@@ -1,7 +1,7 @@
 import logging
 import sys
 from loguru import logger
-from typing import Dict, Any, Union, Optional
+from typing import Dict, Any, Optional
 import json
 
 

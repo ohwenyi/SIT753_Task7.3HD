@@ -4,7 +4,6 @@ import asyncio
 from httpx import AsyncClient, ASGITransport
 from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock
-import time
 
 # Import our application
 from app.main import create_app
