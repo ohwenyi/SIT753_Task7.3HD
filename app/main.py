@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
 
     setup_logging(
         log_level=settings.log_level,
-        json_format=not settings.debug  # Use JSON format in production
+        json_format=settings.debug  # Use JSON format in production
     )
 
     logger = get_logger(__name__)
