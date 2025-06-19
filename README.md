@@ -39,7 +39,7 @@ This project demonstrates a clean, scalable backend architecture with the follow
 
 1. **Clone and setup environment:**
 ```bash
-git clone <repository-url>
+git clone https://github.com/DanielPopoola/fastapi-microservice-health-check.git
 cd fastapi-backend-demo
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
