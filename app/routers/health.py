@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 import asyncio
@@ -170,15 +171,12 @@ async def perform_health_checks(settings: Settings) -> Dict[str, ServiceCheck]:
                 )
             else:
                 checks[service_name] = result
-    
+
     return checks
-
-
 @router.get("/", response_model=HealthStatus)
 async def health_check(settings: Settings = Depends(get_settings)):
     """
     Comprehensive health check endpoint.
-    
     Returns:
         HealthStatus with overall status and individual service checks
     """
@@ -198,7 +196,7 @@ async def health_check(settings: Settings = Depends(get_settings)):
     health_status = HealthStatus(
         status=overall_status,
         timestamp=timestamp,
-        checks={name: check.dict() for name, check in checks.items()}
+        checks={name: check.model_dump() for name, check in checks.items()}
     )
     
     # Log overall health check result
@@ -211,7 +209,7 @@ async def health_check(settings: Settings = Depends(get_settings)):
     
     # Return appropriate HTTP status
     if overall_status == "unhealthy":
-        raise HTTPException(status_code=503, detail=health_status.dict())
+        raise HTTPException(status_code=503, detail=health_status.model_dump())
     
     return health_status
 
@@ -233,18 +231,22 @@ async def readiness_check(settings: Settings = Depends(get_settings)):
     """
     checks = await perform_health_checks(settings)
     
-    
-    critical_services = ["database"]  # Define which services are critical for readiness
+    critical_services = ["database"]
     
     is_ready = True
     for service_name, check in checks.items():
         if service_name in critical_services and check.status == "unhealthy":
+            logger.info(f"Checked services: {service_name}")
+            logger.info(f"Checks status: {check.status}")
             is_ready = False
             break
     
     status_code = 200 if is_ready else 503
-    return {
+    return JSONResponse(
+        status_code=status_code,
+        content={
         "status": "ready" if is_ready else "not_ready",
         "timestamp": time.time(),
-        "checks": {name: check.dict() for name, check in checks.items()}
-    }
+        "checks": {name: check.model_dump() for name, check in checks.items()}
+        }
+    )
