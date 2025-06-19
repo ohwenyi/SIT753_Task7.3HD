@@ -173,6 +173,8 @@ async def perform_health_checks(settings: Settings) -> Dict[str, ServiceCheck]:
                 checks[service_name] = result
 
     return checks
+
+
 @router.get("/", response_model=HealthStatus)
 async def health_check(settings: Settings = Depends(get_settings)):
     """
