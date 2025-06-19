@@ -40,7 +40,7 @@ This project demonstrates a clean, scalable backend architecture with the follow
 1. **Clone and setup environment:**
 ```bash
 git clone https://github.com/DanielPopoola/fastapi-microservice-health-check.git
-cd fastapi-backend-demo
+cd fastapi-microservice-health-check
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
@@ -304,19 +304,3 @@ This project demonstrates several backend engineering concepts:
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## 🎯 What's Next?
-
-This demo covers the fundamentals, but real-world applications often need:
-
-- **Database Integration**: SQLAlchemy with Alembic migrations
-- **Authentication**: JWT tokens with role-based access
-- **Rate Limiting**: Request throttling and API quotas  
-- **Caching**: Redis integration for performance
-- **Message Queues**: Background task processing
-- **API Documentation**: Enhanced OpenAPI specs
-- **Monitoring**: Prometheus metrics and Grafana dashboards
-
-Each of these can be added incrementally while maintaining the clean architecture established here.
