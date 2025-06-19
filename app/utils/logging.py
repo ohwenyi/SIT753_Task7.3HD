@@ -54,7 +54,7 @@ def setup_logging(log_level: str = "INFO", json_format: bool = False) -> None:
             log_entry.update(record["extra"])
             return json.dumps(log_entry)
         log_format = (
-            "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {extra[module]}:{function}:{line} - {message}"
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {extra}:{function}:{line} - {message}"
         )
     else:
         # Human-readable format for development
@@ -78,7 +78,7 @@ def setup_logging(log_level: str = "INFO", json_format: bool = False) -> None:
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
     
     # Set specific loggers to appropriate levels
-    for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"]:
+    for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access", "fastapi", "pytest", "python"]:
         std_logger = logging.getLogger(logger_name)
         std_logger.handlers = [InterceptHandler()]
         std_logger.propagate = False
@@ -95,7 +95,7 @@ def get_logger(name: str) -> Any:
     return logger.bind(module=name)
 
 
-def log_request(method: str, path: str, status_code: int, duration_ms: float, client_ip: Optional[str]) -> None:
+def log_request(method: str, path: str, status_code: int, duration_ms: float) -> None:
     """
     Log HTTP request in a structured way.
     Args:
@@ -104,15 +104,13 @@ def log_request(method: str, path: str, status_code: int, duration_ms: float, cl
         status_code: HTTP status code
         duration_ms: Request duration in milliseconds
     """
-    access_logger = logger.bind(module="api.access")
-    access_logger.info(
-        f"{client_ip} - \"{method} {path}\" {status_code}", 
+    logger.info(
+        "HTTP Request",
         extra={
             "http_method": method,
-            "http_path": path,
+            "http_path": path, 
             "http_status": status_code,
-            "duration_ms": duration_ms,
-            "client_ip": client_ip
+            "duration_ms": duration_ms
         }
     )
 
