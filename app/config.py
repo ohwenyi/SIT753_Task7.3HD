@@ -22,10 +22,11 @@ class Settings(BaseSettings):
     # Health Check Configuration
     health_check_timeout: float = Field(default=5.0, description="Health check timeout in seconds")
     
-    class ConfigDict:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False,
+    }
 
 
 def get_settings() -> Settings:
