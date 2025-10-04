@@ -104,11 +104,9 @@ pipeline {
         stage('Monitoring') {
             steps {
                 bat '''
-                curl -X POST "https://api.datadoghq.com/api/v1/events" ^
-                -H "Content-Type: application/json" ^
-                -H "DD-API-KEY: your_datadog_api_key" ^
-                -d "{ \\"title\\": \\"SIT753 App Health Check\\", \\"text\\": \\"Production app is live and healthy\\", \\"tags\\": [\\"env:production\\"] }"
-                echo Monitoring alert sent to Datadog.
+                timeout /T 5 >nul
+                curl http://127.0.0.1:%APP_PORT%/health > health-check.log
+                echo Monitoring complete.
                 '''
             }
         }
