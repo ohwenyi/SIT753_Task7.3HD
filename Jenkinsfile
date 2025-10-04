@@ -103,7 +103,13 @@ pipeline {
     post {
         always {
             junit 'test-results.xml'
-            archiveArtifacts artifacts: 'test-results.xml', fingerprint: true
+            archiveArtifacts artifacts: '*.txt, health-check.log, test-results.xml', fingerprint: true
+        }
+        success {
+            echo 'Pipeline executed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for troubleshooting.'
         }
     }
 }
