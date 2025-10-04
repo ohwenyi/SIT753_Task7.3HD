@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        PYTHON = 'C:\\Python310\\python.exe' // Adjust to your Python path
+        PYTHON = 'C:\\Python310\\python.exe'
         VENV_DIR = 'venv'
         APP_PORT = '8000'
     }
@@ -80,23 +80,21 @@ pipeline {
             }
         }
 
-        stage('Show Workspace') {
-            steps {
-                bat 'echo Current workspace: %CD%'
-            }
-        }
-
         stage('Release') {
             steps {
                 timeout(time: 1, unit: 'MINUTES') {
-                    bat '''
-                    call %VENV_DIR%\\Scripts\\activate
-                    git config --global user.name "Jenkins CI"
-                    git config --global user.email "jenkins@example.com"
-                    git tag -a "v1.0.%BUILD_NUMBER%" -m "Release v1.0.%BUILD_NUMBER%"
-                    git push origin --tags
-                    echo Release tagged and pushed.
-                    '''
+                    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_PAT')]) {
+                        bat '''
+                        call %VENV_DIR%\\Scripts\\activate
+                        git config --global user.name "Jenkins CI"
+                        git config --global user.email "jenkins@example.com"
+                        set REMOTE_URL=https://ohieway:%GITHUB_PAT%@github.com/ohieway/SIT753_Task7_3bD.git
+                        git remote set-url origin !REMOTE_URL!
+                        git tag -a "v1.0.%BUILD_NUMBER%" -m "Release v1.0.%BUILD_NUMBER%"
+                        git push origin --tags
+                        echo Release tagged and pushed.
+                        '''
+                    }
                 }
             }
         }
