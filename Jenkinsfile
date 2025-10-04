@@ -47,7 +47,7 @@ pipeline {
                 echo '=== Code Quality Stage ==='
                 bat 'docker run --rm %IMAGE_NAME% flake8 . --output-file=flake8-report.txt'
                 bat 'docker run --rm %IMAGE_NAME% pylint main.py > pylint-report.txt'
-                bat 'docker run --rm %IMAGE_NAME% black . > black-report.txt'
+                bat 'docker run --rm %IMAGE_NAME% black --check . > black-report.txt
                 echo 'Code quality checks complete.'
             }
         }
