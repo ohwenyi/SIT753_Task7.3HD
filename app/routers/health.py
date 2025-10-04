@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 import asyncio
 import time
 import asyncpg
-import aioredis
+import redis.asyncio as aioredis
 from ..config import Settings, get_settings
 from ..utils.logging import get_logger, log_health_check
 
