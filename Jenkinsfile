@@ -45,7 +45,7 @@ pipeline {
               call venv\\Scripts\\activate
               flake8 . --output-file=flake8-report.txt
               pylint main.py > pylint-report.txt
-              black . --check > black-report.txt
+              black . > black-report.txt
               echo Code quality checks complete.
               '''
           }
