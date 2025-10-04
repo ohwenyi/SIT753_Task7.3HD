@@ -92,7 +92,7 @@ pipeline {
             steps {
                 echo '=== Monitoring Stage ==='
                 bat '''
-                timeout /T 5 >nul
+                timeout /T 10
                 curl http://localhost:%APP_PORT%/health/ > health-check.log || exit 0
                 echo Monitoring complete.
                 '''  
@@ -101,11 +101,11 @@ pipeline {
     }
 
     post {
-        always {
-            archiveArtifacts artifacts: '**/*-report.txt, health-check.log', fingerprint: true
+        success {
+            echo 'Pipeline executed successfully.'
         }
-        cleanup {
-            cleanWs()
+        failure {
+            echo 'Pipeline failed. Check logs for troubleshooting.'
         }
     }
 }
