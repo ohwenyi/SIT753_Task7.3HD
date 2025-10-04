@@ -47,3 +47,10 @@ websockets==15.0.1
 win32-setctime==1.2.0
 pytest_asyncio
 redis
+flake8
+pylint
+black
+bandit
+pytest
+pytest-asyncio
+httpx
