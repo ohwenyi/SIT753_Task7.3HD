@@ -102,10 +102,8 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: '**/*-report.txt, health-check.log', fingerprint: true
-        }
-        cleanup {
-            cleanWs()
+            junit 'test-results.xml'
+            archiveArtifacts artifacts: 'test-results.xml', fingerprint: true
         }
     }
 }
