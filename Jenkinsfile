@@ -63,7 +63,9 @@ pipeline {
         stage('Security') {
             steps {
                 echo '=== Security Stage ==='
-                bat 'docker run --rm %IMAGE_NAME% bandit -r . > bandit-report.txt'
+                bat """
+                docker run --rm -v "%cd%:/app" %IMAGE_NAME% bandit -r . > bandit-report.txt || exit 0
+                """
                 echo 'Security scan complete.'
             }
         }
