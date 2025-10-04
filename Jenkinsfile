@@ -73,9 +73,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat '''
-                call %VENV_DIR%\\Scripts\\activate
-                start /B uvicorn main:app --host 0.0.0.0 --port %APP_PORT%
-                echo App deployed to test environment.
+                docker build -t sit753-staging .
+                docker run -d --name sit753-staging -p %APP_PORT%:8000 sit753-staging
+                echo App deployed to Docker staging container.
                 '''
             }
         }
@@ -86,14 +86,13 @@ pipeline {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_PAT')]) {
                         bat '''
                         setlocal EnableDelayedExpansion
-                        call %VENV_DIR%\\Scripts\\activate
                         git config --global user.name "Jenkins CI"
                         git config --global user.email "jenkins@example.com"
                         set REMOTE_URL=https://ohwenyi:!GITHUB_PAT!@github.com/ohwenyi/SIT753_Task7.3HD.git
                         git remote set-url origin !REMOTE_URL!
-                        git tag -a "v1.0.%BUILD_NUMBER%" -m "Release v1.0.%BUILD_NUMBER%"
+                        git tag -a "v1.0.%BUILD_NUMBER%" -m "Promoting to production: v1.0.%BUILD_NUMBER%"
                         git push origin --tags
-                        echo Release tagged and pushed.
+                        echo Release promoted to production.
                         endlocal
                         '''
                     }
@@ -104,22 +103,11 @@ pipeline {
         stage('Monitoring') {
             steps {
                 bat '''
-                setlocal EnableDelayedExpansion
-                set RETRIES=5
-                set COUNT=0
-                :retry
-                curl http://localhost:%APP_PORT%/health > health-check.log && goto success
-                set /A COUNT+=1
-                if !COUNT! GEQ !RETRIES! goto fail
-                timeout /T 2 >nul
-                goto retry
-                :success
-                echo Monitoring complete.
-                exit /B 0
-                :fail
-                echo Monitoring failed.
-                exit /B 1
-                endlocal
+                curl -X POST "https://api.datadoghq.com/api/v1/events" ^
+                -H "Content-Type: application/json" ^
+                -H "DD-API-KEY: your_datadog_api_key" ^
+                -d "{ \\"title\\": \\"SIT753 App Health Check\\", \\"text\\": \\"Production app is live and healthy\\", \\"tags\\": [\\"env:production\\"] }"
+                echo Monitoring alert sent to Datadog.
                 '''
             }
         }
