@@ -101,11 +101,11 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'Pipeline executed successfully.'
+        always {
+            archiveArtifacts artifacts: '**/*-report.txt, health-check.log', fingerprint: true
         }
-        failure {
-            echo 'Pipeline failed. Check logs for troubleshooting.'
+        cleanup {
+            cleanWs()
         }
     }
 }
