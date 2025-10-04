@@ -20,6 +20,7 @@ pipeline {
                 pip install pytest
                 pip install pytest_asyncio
                 pip install httpx
+                pip install fastapi
                 pip install -r requirements.txt
                 pip install flake8 pylint black bandit
                 echo Build complete.
