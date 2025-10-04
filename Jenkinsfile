@@ -55,6 +55,7 @@ pipeline {
             steps {
                 bat '''
                 call %VENV_DIR%\\Scripts\\activate
+                chcp 65001
                 bandit -r . > bandit-report.txt
                 echo Security scan complete.
                 '''
