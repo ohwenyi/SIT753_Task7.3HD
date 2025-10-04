@@ -104,12 +104,23 @@ pipeline {
         stage('Monitoring') {
             steps {
                 bat '''
-                curl http://localhost:%APP_PORT%/health > health-check.log
+                set RETRIES=5
+                set COUNT=0
+                :retry
+                curl http://localhost:%APP_PORT%/health > health-check.log && goto success
+                set /A COUNT+=1
+                if !COUNT! GEQ !RETRIES! goto fail
+                timeout /T 2 >nul
+                goto retry
+                :success
                 echo Monitoring complete.
+                exit /B 0
+                :fail
+                echo Monitoring failed.
+                exit /B 1
                 '''
             }
         }
-    }
 
     post {
         always {
