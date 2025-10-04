@@ -32,7 +32,9 @@ pipeline {
         stage('Test') {
             steps {
                 echo '=== Test Stage ==='
-                bat 'docker run --rm %IMAGE_NAME% pytest --junitxml=test-results.xml'
+                bat '''
+                docker run --rm -v %cd%:/app %IMAGE_NAME% pytest --junitxml=/app/test-results.xml
+                '''
                 echo 'Tests executed.'
             }
             post {
