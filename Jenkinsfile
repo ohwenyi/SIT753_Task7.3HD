@@ -15,12 +15,14 @@ pipeline {
                 python -m venv %VENV_DIR%
                 call %VENV_DIR%\\Scripts\\activate
                 pip install --upgrade pip
+                pip install setuptools
                 pip install -r requirements.txt
+                pip install flake8 pylint black bandit
                 echo Build complete.
                 '''
             }
         }
-
+        
         stage('Test') {
             steps {
                 bat '''
