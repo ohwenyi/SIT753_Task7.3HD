@@ -93,9 +93,9 @@ pipeline {
                 echo '=== Monitoring Stage ==='
                 bat '''
                 timeout /T 5 >nul
-                curl http://localhost:%APP_PORT%/health > health-check.log || exit 0
+                curl http://localhost:%APP_PORT%/health/ > health-check.log || exit 0
                 echo Monitoring complete.
-                '''
+                '''  
             }
         }
     }
