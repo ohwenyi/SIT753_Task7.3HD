@@ -56,8 +56,7 @@ pipeline {
                 bat '''
                 call %VENV_DIR%\\Scripts\\activate
                 chcp 65001
-                bandit -r . > bandit-report.txt
-                python -m bandit -r . -f txt -o bandit-report.txt --encoding utf-8
+                python -c "import subprocess; open('bandit-report.txt', 'w', encoding='utf-8').write(subprocess.run(['bandit', '-r', '.'], capture_output=True, text=True).stdout)"
                 echo Security scan complete.
                 '''
             }
