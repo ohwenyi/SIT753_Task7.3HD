@@ -18,5 +18,5 @@ EXPOSE 80
 # Default port (can be overridden)
 ENV PORT=8000
 
-# Start the app
+# Start the FastAPI app
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
