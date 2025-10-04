@@ -82,14 +82,16 @@ pipeline {
 
         stage('Release') {
             steps {
-                bat '''
-                call %VENV_DIR%\\Scripts\\activate
-                git config --global user.name "Jenkins CI"
-                git config --global user.email "jenkins@example.com"
-                git tag -a "v1.0.%BUILD_NUMBER%" -m "Release v1.0.%BUILD_NUMBER%"
-                git push origin --tags
-                echo Release tagged and pushed.
-                '''
+                timeout(time: 1, unit: 'MINUTES') {
+                    bat '''
+                    call %VENV_DIR%\\Scripts\\activate
+                    git config --global user.name "Jenkins CI"
+                    git config --global user.email "jenkins@example.com"
+                    git tag -a "v1.0.%BUILD_NUMBER%" -m "Release v1.0.%BUILD_NUMBER%"
+                    git push origin --tags
+                    echo Release tagged and pushed.
+                    '''
+                }
             }
         }
 
