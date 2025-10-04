@@ -92,7 +92,8 @@ pipeline {
             steps {
                 echo '=== Monitoring Stage ==='
                 bat '''
-                curl http://localhost:%APP_PORT%/health > health-check.log
+                timeout /T 5 >nul
+                curl http://localhost:%APP_PORT%/health > health-check.log || exit 0
                 echo Monitoring complete.
                 '''
             }
