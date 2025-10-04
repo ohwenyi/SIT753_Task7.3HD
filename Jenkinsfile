@@ -23,6 +23,7 @@ pipeline {
                 pip install fastapi
                 pip install uvicorn
                 pip install pydantic-settings
+                pip install loguru
                 pip install -r requirements.txt
                 pip install flake8 pylint black bandit
                 echo Build complete.
