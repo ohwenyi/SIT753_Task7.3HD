@@ -31,7 +31,7 @@ pipeline {
                 '''
             }
         }
-        
+
         stage('Test') {
             steps {
                 bat '''
@@ -48,16 +48,16 @@ pipeline {
         }
 
         stage('Code Quality') {
-          steps {
-              bat '''
-              call venv\\Scripts\\activate
-              flake8 . --output-file=flake8-report.txt
-              pylint main.py > pylint-report.txt
-              black . > black-report.txt
-              echo Code quality checks complete.
-              '''
-          }
-      }
+            steps {
+                bat '''
+                call %VENV_DIR%\\Scripts\\activate
+                flake8 . --output-file=flake8-report.txt
+                pylint main.py > pylint-report.txt
+                black . > black-report.txt
+                echo Code quality checks complete.
+                '''
+            }
+        }
 
         stage('Security') {
             steps {
@@ -104,6 +104,7 @@ pipeline {
         stage('Monitoring') {
             steps {
                 bat '''
+                setlocal EnableDelayedExpansion
                 set RETRIES=5
                 set COUNT=0
                 :retry
@@ -118,13 +119,18 @@ pipeline {
                 :fail
                 echo Monitoring failed.
                 exit /B 1
+                endlocal
                 '''
             }
         }
+    }
 
     post {
         always {
-            archiveArtifacts artifacts: '**/*-report.txt', fingerprint: true
+            archiveArtifacts artifacts: '**/*-report.txt, health-check.log', fingerprint: true
+        }
+        cleanup {
+            cleanWs()
         }
     }
 }
