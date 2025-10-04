@@ -2,41 +2,38 @@ pipeline {
     agent any
 
     environment {
-        PYTHON = 'C:\\Python310\\python.exe'
-        VENV_DIR = 'venv'
-        APP_PORT = '8000'
+        IMAGE_NAME = "sit753-app:latest"
+        STAGING_CONTAINER = "sit753-staging"
+        PROD_CONTAINER = "sit753-prod"
+        APP_PORT = "8000"
+        GIT_BRANCH = "master"
     }
 
     stages {
 
+        stage('Checkout') {
+            steps {
+                echo '=== Checking out master branch ==='
+                checkout([$class: 'GitSCM',
+                    branches: [[name: "*/${GIT_BRANCH}"]],
+                    userRemoteConfigs: [[url: 'https://github.com/ohwenyi/SIT753_Task7.3HD.git']]
+                ])
+            }
+        }
+
         stage('Build') {
             steps {
-                bat '''
-                python -m venv %VENV_DIR%
-                %VENV_DIR%\\Scripts\\python.exe -m pip install --upgrade pip
-                %VENV_DIR%\\Scripts\\python.exe -m pip install setuptools
-                %VENV_DIR%\\Scripts\\python.exe -m pip install redis
-                %VENV_DIR%\\Scripts\\python.exe -m pip install pytest
-                %VENV_DIR%\\Scripts\\python.exe -m pip install pytest_asyncio
-                %VENV_DIR%\\Scripts\\python.exe -m pip install httpx
-                %VENV_DIR%\\Scripts\\python.exe -m pip install fastapi
-                %VENV_DIR%\\Scripts\\python.exe -m pip install uvicorn
-                %VENV_DIR%\\Scripts\\python.exe -m pip install pydantic-settings
-                %VENV_DIR%\\Scripts\\python.exe -m pip install loguru
-                %VENV_DIR%\\Scripts\\python.exe -m pip install asyncpg
-                %VENV_DIR%\\Scripts\\python.exe -m pip install -r requirements.txt
-                %VENV_DIR%\\Scripts\\python.exe -m pip install flake8 pylint black bandit
-                echo Build complete.
-                '''
+                echo '=== Build Stage ==='
+                bat 'docker build -t %IMAGE_NAME% .'
+                echo 'Docker image built.'
             }
         }
 
         stage('Test') {
             steps {
-                bat '''
-                %VENV_DIR%\\Scripts\\python.exe -m pytest --junitxml=test-results.xml
-                echo Testing complete.
-                '''
+                echo '=== Test Stage ==='
+                bat 'docker run --rm %IMAGE_NAME% pytest --junitxml=test-results.xml'
+                echo 'Tests executed.'
             }
             post {
                 always {
@@ -47,60 +44,45 @@ pipeline {
 
         stage('Code Quality') {
             steps {
-                bat '''
-                %VENV_DIR%\\Scripts\\flake8 . --output-file=flake8-report.txt
-                %VENV_DIR%\\Scripts\\pylint main.py > pylint-report.txt
-                %VENV_DIR%\\Scripts\\black . > black-report.txt
-                echo Code quality checks complete.
-                '''
+                echo '=== Code Quality Stage ==='
+                bat 'docker run --rm %IMAGE_NAME% flake8 . --output-file=flake8-report.txt'
+                bat 'docker run --rm %IMAGE_NAME% pylint main.py > pylint-report.txt'
+                bat 'docker run --rm %IMAGE_NAME% black . > black-report.txt'
+                echo 'Code quality checks complete.'
             }
         }
 
         stage('Security') {
             steps {
-                bat '''
-                chcp 65001
-                %VENV_DIR%\\Scripts\\python.exe -c "import subprocess; open('bandit-report.txt', 'w', encoding='utf-8').write(subprocess.run(['%VENV_DIR%\\\\Scripts\\\\bandit', '-r', '.'], capture_output=True, text=True).stdout)"
-                echo Security scan complete.
-                '''
+                echo '=== Security Stage ==='
+                bat 'docker run --rm %IMAGE_NAME% bandit -r . > bandit-report.txt'
+                echo 'Security scan complete.'
             }
         }
 
         stage('Deploy') {
             steps {
-                bat '''
-                start /B %VENV_DIR%\\Scripts\\python.exe -m uvicorn main:app --host 127.0.0.1 --port %APP_PORT%
-                timeout /T 5 >nul
-                echo App deployed to local test environment.
-                '''
+                echo '=== Deploy Stage (Staging) ==='
+                bat 'docker rm -f %STAGING_CONTAINER% || exit 0'
+                bat 'docker run -d --name %STAGING_CONTAINER% -p %APP_PORT%:8000 %IMAGE_NAME%'
+                echo 'App deployed to staging.'
             }
         }
 
         stage('Release') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_PAT')]) {
-                        bat '''
-                        setlocal EnableDelayedExpansion
-                        git config --global user.name "Jenkins CI"
-                        git config --global user.email "jenkins@example.com"
-                        set REMOTE_URL=https://ohwenyi:!GITHUB_PAT!@github.com/ohwenyi/SIT753_Task7.3HD.git
-                        git remote set-url origin !REMOTE_URL!
-                        git tag -a "v1.0.%BUILD_NUMBER%" -m "Promoting to production: v1.0.%BUILD_NUMBER%"
-                        git push origin --tags
-                        echo Release promoted to production.
-                        endlocal
-                        '''
-                    }
-                }
+                echo '=== Release Stage (Production) ==='
+                bat 'docker rm -f %PROD_CONTAINER% || exit 0'
+                bat 'docker run -d --name %PROD_CONTAINER% -p 80:8000 %IMAGE_NAME%'
+                echo 'App promoted to production.'
             }
         }
 
         stage('Monitoring') {
             steps {
+                echo '=== Monitoring Stage ==='
                 bat '''
-                timeout /T 5 >nul
-                curl http://127.0.0.1:%APP_PORT%/health > health-check.log
+                curl http://localhost:%APP_PORT%/health > health-check.log
                 echo Monitoring complete.
                 '''
             }
