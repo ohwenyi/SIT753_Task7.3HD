@@ -13,20 +13,19 @@ pipeline {
             steps {
                 bat '''
                 python -m venv %VENV_DIR%
-                call %VENV_DIR%\\Scripts\\activate
-                pip install --upgrade pip
-                pip install setuptools
-                pip install redis
-                pip install pytest
-                pip install pytest_asyncio
-                pip install httpx
-                pip install fastapi
-                pip install uvicorn
-                pip install pydantic-settings
-                pip install loguru
-                pip install asyncpg
-                pip install -r requirements.txt
-                pip install flake8 pylint black bandit
+                %VENV_DIR%\\Scripts\\python.exe -m pip install --upgrade pip
+                %VENV_DIR%\\Scripts\\python.exe -m pip install setuptools
+                %VENV_DIR%\\Scripts\\python.exe -m pip install redis
+                %VENV_DIR%\\Scripts\\python.exe -m pip install pytest
+                %VENV_DIR%\\Scripts\\python.exe -m pip install pytest_asyncio
+                %VENV_DIR%\\Scripts\\python.exe -m pip install httpx
+                %VENV_DIR%\\Scripts\\python.exe -m pip install fastapi
+                %VENV_DIR%\\Scripts\\python.exe -m pip install uvicorn
+                %VENV_DIR%\\Scripts\\python.exe -m pip install pydantic-settings
+                %VENV_DIR%\\Scripts\\python.exe -m pip install loguru
+                %VENV_DIR%\\Scripts\\python.exe -m pip install asyncpg
+                %VENV_DIR%\\Scripts\\python.exe -m pip install -r requirements.txt
+                %VENV_DIR%\\Scripts\\python.exe -m pip install flake8 pylint black bandit
                 echo Build complete.
                 '''
             }
@@ -35,8 +34,7 @@ pipeline {
         stage('Test') {
             steps {
                 bat '''
-                call %VENV_DIR%\\Scripts\\activate
-                pytest --junitxml=test-results.xml
+                %VENV_DIR%\\Scripts\\python.exe -m pytest --junitxml=test-results.xml
                 echo Testing complete.
                 '''
             }
@@ -50,10 +48,9 @@ pipeline {
         stage('Code Quality') {
             steps {
                 bat '''
-                call %VENV_DIR%\\Scripts\\activate
-                flake8 . --output-file=flake8-report.txt
-                pylint main.py > pylint-report.txt
-                black . > black-report.txt
+                %VENV_DIR%\\Scripts\\flake8 . --output-file=flake8-report.txt
+                %VENV_DIR%\\Scripts\\pylint main.py > pylint-report.txt
+                %VENV_DIR%\\Scripts\\black . > black-report.txt
                 echo Code quality checks complete.
                 '''
             }
@@ -62,9 +59,8 @@ pipeline {
         stage('Security') {
             steps {
                 bat '''
-                call %VENV_DIR%\\Scripts\\activate
                 chcp 65001
-                python -c "import subprocess; open('bandit-report.txt', 'w', encoding='utf-8').write(subprocess.run(['bandit', '-r', '.'], capture_output=True, text=True).stdout)"
+                %VENV_DIR%\\Scripts\\python.exe -c "import subprocess; open('bandit-report.txt', 'w', encoding='utf-8').write(subprocess.run(['%VENV_DIR%\\\\Scripts\\\\bandit', '-r', '.'], capture_output=True, text=True).stdout)"
                 echo Security scan complete.
                 '''
             }
@@ -73,8 +69,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat '''
-                call %VENV_DIR%\\Scripts\\activate
-                start /B uvicorn main:app --host 127.0.0.1 --port %APP_PORT%
+                start /B %VENV_DIR%\\Scripts\\python.exe -m uvicorn main:app --host 127.0.0.1 --port %APP_PORT%
                 timeout /T 5 >nul
                 echo App deployed to local test environment.
                 '''
