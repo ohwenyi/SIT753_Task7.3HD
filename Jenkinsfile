@@ -57,6 +57,7 @@ pipeline {
                 call %VENV_DIR%\\Scripts\\activate
                 chcp 65001
                 bandit -r . > bandit-report.txt
+                python -m bandit -r . -f txt -o bandit-report.txt --encoding utf-8
                 echo Security scan complete.
                 '''
             }
