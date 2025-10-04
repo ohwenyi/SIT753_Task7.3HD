@@ -80,6 +80,12 @@ pipeline {
             }
         }
 
+        stage('Show Workspace') {
+            steps {
+                bat 'echo Current workspace: %CD%'
+            }
+        }
+
         stage('Release') {
             steps {
                 timeout(time: 1, unit: 'MINUTES') {
