@@ -73,9 +73,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat '''
-                docker build -t sit753-staging .
-                docker run -d --name sit753-staging -p %APP_PORT%:8000 sit753-staging
-                echo App deployed to Docker staging container.
+                call %VENV_DIR%\\Scripts\\activate
+                start /B uvicorn main:app --host 127.0.0.1 --port %APP_PORT%
+                timeout /T 5 >nul
+                echo App deployed to local test environment.
                 '''
             }
         }
