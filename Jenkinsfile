@@ -85,6 +85,7 @@ pipeline {
                 timeout(time: 1, unit: 'MINUTES') {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_PAT')]) {
                         bat '''
+                        setlocal EnableDelayedExpansion
                         call %VENV_DIR%\\Scripts\\activate
                         git config --global user.name "Jenkins CI"
                         git config --global user.email "jenkins@example.com"
@@ -93,6 +94,7 @@ pipeline {
                         git tag -a "v1.0.%BUILD_NUMBER%" -m "Release v1.0.%BUILD_NUMBER%"
                         git push origin --tags
                         echo Release tagged and pushed.
+                        endlocal
                         '''
                     }
                 }
